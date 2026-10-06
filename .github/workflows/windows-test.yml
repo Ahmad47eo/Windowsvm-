@@ -1,0 +1,53 @@
+name: Windows Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  windows-test:
+    runs-on: windows-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Windows environment
+        shell: pwsh
+        run: |
+          Write-Host "Windows runner ready"
+          Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion, OsArchitecture
+          Write-Host "CPU:"
+          Get-CimInstance Win32_Processor | Select-Object Name, NumberOfLogicalProcessors
+          Write-Host "RAM:"
+          Get-CimInstance Win32_ComputerSystem | Select-Object TotalPhysicalMemory
+          Write-Host "Disk:"
+          Get-PSDrive -PSProvider FileSystem | Select-Object Name, Used, Free
+
+      - name: Run repository tests
+        shell: pwsh
+        run: |
+          $testScripts = @(
+            "tests\\run.ps1",
+            "scripts\\test.ps1"
+          )
+
+          $found = $false
+          foreach ($script in $testScripts) {
+            if (Test-Path $script) {
+              Write-Host "Running $script"
+              & $script
+              if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+              $found = $true
+              break
+            }
+          }
+
+          if (-not $found) {
+            Write-Host "No repository test script found; environment check completed successfully."
+          }

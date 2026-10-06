@@ -14,6 +14,17 @@ jobs:
     timeout-minutes: 360
 
     steps:
+      - name: Show runner network information
+        shell: bash
+        run: |
+          echo "Runner hostname: $(hostname)"
+          echo "Runner local addresses:"
+          hostname -I || true
+          echo "Runner public egress IP (diagnostic only):"
+          curl -4 -fsS https://api.ipify.org || true
+          echo
+          echo "Note: this GitHub-hosted runner is temporary and its IP is not a stable VNC endpoint."
+
       - name: Checkout repository
         uses: actions/checkout@v4
 

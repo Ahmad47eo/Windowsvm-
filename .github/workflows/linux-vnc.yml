@@ -1,0 +1,71 @@
+name: Linux Desktop Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  linux-desktop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build phone-friendly XFCE + VNC package
+        shell: bash
+        run: |
+          set -e
+          mkdir -p dist
+          cat > dist/setup-xfce-vnc.sh <<'SCRIPT'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          export DEBIAN_FRONTEND=noninteractive
+
+          apt-get update
+          apt-get install -y xfce4 xfce4-goodies tigervnc-standalone-server dbus-x11
+
+          useradd -m -s /bin/bash desktop || true
+          install -d -m 700 -o desktop -g desktop /home/desktop/.vnc
+          printf '%s\n' '#!/bin/sh' 'startxfce4 &' > /home/desktop/.vnc/xstartup
+          chmod +x /home/desktop/.vnc/xstartup
+          chown -R desktop:desktop /home/desktop/.vnc
+
+          echo "XFCE and TigerVNC installed."
+          echo "Create a strong VNC password with: vncpasswd"
+          echo "Start with: vncserver :1 -localhost no -geometry 1280x720 -depth 24"
+          SCRIPT
+          chmod +x dist/setup-xfce-vnc.sh
+
+          cat > dist/README.txt <<'DOC'
+          Phone-friendly Linux desktop
+          =============================
+          Target: a real Linux VM/server that you control.
+
+          Install XFCE + TigerVNC:
+            sudo bash setup-xfce-vnc.sh
+
+          Set the VNC password:
+            sudo -u desktop vncpasswd
+
+          Start a 1280x720 desktop:
+            sudo -u desktop vncserver :1 -localhost no -geometry 1280x720 -depth 24
+
+          Connect from your phone with a VNC client to the VM's address on port 5901.
+
+          Security:
+          - Prefer a VPN/private network or SSH tunnel instead of exposing VNC directly.
+          - Use a strong VNC password.
+          - Do not put passwords or private keys in this repository.
+          DOC
+
+      - name: Upload Linux desktop package
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-xfce-vnc
+          path: dist/

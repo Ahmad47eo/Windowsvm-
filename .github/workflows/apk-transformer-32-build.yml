@@ -8,7 +8,7 @@ on:
       - ".github/workflows/apk-transformer-32-build.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-android-apk:
@@ -56,3 +56,15 @@ jobs:
           path: apk-transformer-32/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish APK to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-transformer-32-build-${{ github.run_number }}
+          name: APK Transformer 32 Build ${{ github.run_number }}
+          body: |
+            Automated debug build of APK Transformer 32.
+
+            **Important:** This app checks APK ABI compatibility; it does not convert 64-bit native code into 32-bit code.
+          files: apk-transformer-32/app/build/outputs/apk/debug/app-debug.apk
+          fail_on_unmatched_files: true

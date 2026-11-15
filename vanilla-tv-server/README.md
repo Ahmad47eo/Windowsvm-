@@ -1,30 +1,26 @@
 # Vanilla TV Server
 
-Android TV manager starter for a **pure vanilla Minecraft Java 26.3** server.
+Android TV manager for a **pure vanilla Minecraft Java 26.3** server. No Paper, Spigot, Bukkit, or plugins.
 
-## Current build
-- Android TV / Leanback launcher entry
-- Large remote-friendly interface
-- On-device CPU ABI and Android version detection
-- Import and remember a vanilla server JAR
-- Offline Mode toggle that writes `online-mode=true|false` into the app-private server.properties template at `files/server/server.properties`
-- Explicit impersonation warning when Offline Mode is enabled
+## Features
+- Android TV launcher and remote-friendly interface
+- CPU ABI and 64-bit capability detection
+- Import the vanilla server JAR into app-private storage
+- EULA acceptance control writes eula.txt
+- Offline Mode toggle writes online-mode=false to server.properties (Online Mode is default)
+- Default server port 25565 and MOTD
+- Start/Stop controls and live process output if a compatible runtime is available
+- Checks for Java 25 before attempting to launch
 
-## Offline Mode security
-When Offline Mode is enabled, the generated server.properties template contains:
+## Important runtime limitation
+Android normally runs apps on ART, not a desktop/server Java VM. This app checks for a Java 25 executable named java on PATH; it does **not** bundle a server-compatible JVM. Most Android TV devices will not have one, so Start may report that Java cannot be found. Minecraft 26.3 needs a supported 64-bit Java runtime; a 32-bit-only ARM TV cannot run a 64-bit-only runtime. ABI detection does not prove the TV can host the server.
 
-```properties
-online-mode=false
-```
+The current process manager is experimental and runs from the app process. Android may stop it in the background. It is not an always-on production hosting service. A compatible runtime and foreground service still need testing on the actual TV.
 
-This disables Mojang/Microsoft account authentication. Players can connect with arbitrary names, including names belonging to other players. Depending on the server version and setup, duplicate-name attempts may also cause conflicts. Anyone who can reach the server may impersonate another player. Keep an offline-mode server restricted to a trusted LAN or private VPN. Do not expose its port directly to the public internet.
+## Offline Mode warning
+Offline Mode writes online-mode=false. It disables Microsoft/Minecraft account authentication, allowing arbitrary usernames and impersonation. Keep it on a trusted private LAN or VPN. Never expose an offline-mode server directly to the public internet.
 
-The toggle currently saves the setting to an app-private server.properties template. The server process is **not implemented yet**, so this setting is not currently applied to a running Minecraft server.
+## Build without Android Studio
+Open **Actions → Vanilla TV Server Android Build**, run the workflow, then download the vanilla-tv-server-debug-apk artifact from a completed run. A push to this project folder automatically triggers the workflow.
 
-## Build
-GitHub Actions builds the debug APK. Open **Actions → Vanilla TV Server Android Build**, then download the `vanilla-tv-server-debug-apk` artifact from a successful run.
-
-## Important compatibility limitation
-Minecraft Java 26.3 requires a compatible Java 25 runtime. Modern Java server builds require a supported 64-bit runtime; a 32-bit-only ARM TV is not expected to run this server. The app detects the TV architecture but does not yet bundle or launch Java. Start/Stop controls remain disabled until a compatible runtime and process supervisor are implemented and tested.
-
-This project does not use Paper, Spigot, Bukkit, or plugins.
+Minimum Android version: 6.0 (API 23).

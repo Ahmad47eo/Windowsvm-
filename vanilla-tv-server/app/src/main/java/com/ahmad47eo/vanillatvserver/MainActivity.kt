@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -15,6 +16,7 @@ import android.widget.TextView
 class MainActivity : Activity() {
     private lateinit var deviceInfo: TextView
     private lateinit var jarInfo: TextView
+    private lateinit var offlineInfo: TextView
     private val prefs by lazy { getSharedPreferences("vanilla_server", MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,6 +49,23 @@ class MainActivity : Activity() {
         root.addView(choose, params())
         jarInfo = text("No server JAR selected", 16f)
         root.addView(jarInfo)
+
+        root.addView(text("AUTHENTICATION", 21f, 0xFF62D68B.toInt()))
+        val offlineToggle = CheckBox(this).apply {
+            text = "Enable Offline Mode (online-mode=false)"
+            textSize = 17f
+            setTextColor(0xFFFFFFFF.toInt())
+            isChecked = prefs.getBoolean("offline_mode", false)
+            setOnCheckedChangeListener { _, checked ->
+                prefs.edit().putBoolean("offline_mode", checked).apply()
+                writeServerProperties()
+                refreshOfflineInfo()
+            }
+        }
+        root.addView(offlineToggle, params())
+        offlineInfo = text("", 14f, 0xFFFFC66D.toInt())
+        root.addView(offlineInfo)
+        refreshOfflineInfo()
 
         root.addView(text("SERVER CONTROLS", 21f, 0xFF62D68B.toInt()))
         root.addView(Button(this).apply {
